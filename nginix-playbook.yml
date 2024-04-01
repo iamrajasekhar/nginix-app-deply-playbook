@@ -1,0 +1,57 @@
+---
+- name: Install Nginx and deploy web application
+  hosts: all
+  become: true
+  vars:
+    web_app_name: "2103_central"
+    web_app_zip_file: "/var/www/{{ web_app_name }}.zip"
+    web_app_dest_dir: "/var/www/html"  # Directory where web application will be deployed
+
+  tasks:
+    # Install Nginx
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+
+    # Deploy web application
+    - name: Download web application from Tooplate
+      get_url:
+        url: "https://www.tooplate.com/zip-templates/2103_central.zip"
+        dest: "{{ web_app_zip_file }}"
+
+    - name: Unzip web application
+      ansible.builtin.unarchive:
+        src: "{{ web_app_zip_file }}"
+        dest: "{{ web_app_dest_dir }}"
+        remote_src: yes
+        creates: "{{ web_app_dest_dir }}/2103_central"
+
+    # Ensure permissions
+    - name: Ensure correct permissions for web application directory
+      ansible.builtin.file:
+        path: "{{ web_app_dest_dir }}/2103_central"
+        recurse: yes
+        owner: www-data
+        group: www-data
+        mode: '0755'
+
+    # Copy contents to /var/www/html
+    - name: Copy web application contents to /var/www/html
+      ansible.builtin.copy:
+        src: "{{ web_app_dest_dir }}/2103_central/"
+        dest: "{{ web_app_dest_dir }}"
+        remote_src: yes
+
+    # Remove the unzipped folder
+    - name: Remove unzipped folder
+      ansible.builtin.file:
+        path: "{{ web_app_dest_dir }}/2103_central"
+        state: absent
+
+  handlers:
+    # Reload Nginx
+    - name: Reload Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded
