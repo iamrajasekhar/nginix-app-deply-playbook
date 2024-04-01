@@ -8,6 +8,13 @@
     web_app_dest_dir: "/var/www/html"  # Directory where web application will be deployed
 
   tasks:
+
+    # Update package cache
+    - name: Update package cache
+      apt:
+        update_cache: yes
+
+
     # Install Nginx
     - name: Install Nginx
       apt:
